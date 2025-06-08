@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { generateProductCode } from "./utils";
+import { generateProductCode } from "../utils/utils";
 
 const baseProducts = [
 

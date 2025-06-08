@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { generateProductCode } from "./utils";
+import { generateProductCode } from "../utils/utils";
 import { useRouter } from "next/router";
 import ProtectedRoute from "./ProtectedRoute";
 
