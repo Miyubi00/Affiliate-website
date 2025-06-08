@@ -1,115 +1,135 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import React, { useState, useMemo, useEffect } from "react";
+import { generateProductCode } from "./utils";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const baseProducts = [
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+];
 
 export default function Home() {
+  const [search, setSearch] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [extraProducts, setExtraProducts] = useState([]);
+
+  // Fungsi load products dari localStorage
+  const loadProductsFromStorage = () => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin-products");
+      if (saved) {
+        setExtraProducts(JSON.parse(saved));
+      } else {
+        setExtraProducts([]);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadProductsFromStorage();
+
+    // Pasang listener event storage untuk auto refresh jika data di tab lain berubah
+    const onStorageChange = (event) => {
+      if (event.key === "admin-products") {
+        loadProductsFromStorage();
+      }
+    };
+
+    window.addEventListener("storage", onStorageChange);
+
+    // Cleanup listener saat component unmount
+    return () => {
+      window.removeEventListener("storage", onStorageChange);
+    };
+  }, []);
+
+  const products = useMemo(() => {
+    const combined = [...baseProducts, ...extraProducts];
+    return combined.map((product) => ({
+      ...product,
+      code: generateProductCode(product.id),
+    }));
+  }, [extraProducts]);
+
+  const filteredProducts = products.filter(
+    (product) =>
+      product.title.toLowerCase().includes(search.toLowerCase()) ||
+      product.code.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleBackdropClick = (e) => {
+    if (e.target.id === "popup-backdrop") {
+      setSelectedProduct(null);
+    }
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white py-10 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold mb-2 text-center">✨ Paimon Link ✨</h1>
+        <p className="mb-6 text-gray-300 text-center">Temukan produk favorit Paimon!</p>
+
+        <div className="flex justify-center mb-10">
+          <input
+            type="text"
+            placeholder="Cari produk (nama / kode)..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full max-w-md px-4 py-2 rounded-lg border border-gray-600 bg-[#1e293b] text-white placeholder-gray-400"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              className="bg-[#0f172a] border border-gray-700 rounded-xl p-4 shadow-xl hover:shadow-blue-500/20 transition duration-300 flex flex-col"
+            >
+              <img
+                src={product.image}
+                alt={product.title}
+                className="w-full h-40 sm:h-48 object-contain rounded-md mb-2"
+              />
+              <h2 className="text-left text-xs text-[16px] font-medium mb-4 truncate">{product.title}</h2>
+              <button
+                onClick={() => setSelectedProduct(product)}
+                className="mb-2 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg"
+              >
+                Detail
+              </button>
+              <a
+                href={product.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block text-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+              >
+                Beli Sekarang
+              </a>
+            </div>
+          ))}
+        </div>
+
+        {/* Popup Detail */}
+        {selectedProduct && (
+          <div
+            id="popup-backdrop"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={handleBackdropClick}
+          >
+            <div
+              className="bg-[#1e293b] rounded-xl p-6 w-full max-w-md relative overflow-auto max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-2 right-2 text-white text-xl font-bold"
+                onClick={() => setSelectedProduct(null)}
+              >
+                X
+              </button>
+              <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
+              <p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
+              <p className="text-gray-400 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
