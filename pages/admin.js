@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { generateProductCode } from "../utils/utils";
 import { useRouter } from "next/router";
-import ProtectedRoute from "./ProtectedRoute";
+import ProtectedRoute from "../utils/ProtectedRoute";
 
 export default function AdminPage() {
     const handleLogout = () => {
