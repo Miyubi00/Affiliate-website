@@ -61,10 +61,10 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white py-10 px-4">
+    <main className="min-h-screen bg-[#F1E7E7] text-white py-10 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2 text-center">✨ Paimon Link ✨</h1>
-        <p className="mb-6 text-gray-300 text-center">Temukan produk favorit Paimon!</p>
+        <h1 className="text-4xl font-bold mb-2 text-[#948979] text-center">✨ Paimon Link ✨</h1>
+        <p className="mb-6 text-[#948979] text-center">Temukan produk favorit Paimon!</p>
 
         <div className="flex justify-center mb-10">
           <input
@@ -72,7 +72,7 @@ export default function Home() {
             placeholder="Cari produk (nama / kode)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-md px-4 py-2 rounded-lg border border-gray-600 bg-[#1e293b] text-white placeholder-gray-400"
+            className="w-full max-w-md px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#94897] placeholder-[#948979]"
           />
         </div>
 
@@ -80,7 +80,7 @@ export default function Home() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-[#0f172a] border border-gray-700 rounded-xl p-4 shadow-xl hover:shadow-blue-500/20 transition duration-300 flex flex-col"
+              className="bg-[#E69DB8] border border-yellow rounded-xl p-4 shadow-xl hover:shadow-yellow-500/20 transition duration-300 flex flex-col"
             >
               <div className="w-full aspect-square flex items-center justify-center mb-4">
                 <img
@@ -99,7 +99,7 @@ export default function Home() {
                   href={product.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg w-full text-center font-semibold"
+                  className="px-4 py-2 bg-[#D76C82] hover:text-[#948979] hover:bg-[#FFFECE] text-white rounded-lg w-full text-center font-semibold"
                 >
                   Beli
                 </a>
@@ -117,7 +117,7 @@ export default function Home() {
             onClick={handleBackdropClick}
           >
             <div
-              className="bg-[#1e293b] rounded-xl p-6 w-full max-w-md relative overflow-auto max-h-[90vh]"
+              className="bg-[#E69DB8] rounded-xl p-6 w-full max-w-md relative overflow-auto max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -128,7 +128,7 @@ export default function Home() {
               </button>
               <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
               <p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
-              <p className="text-gray-400 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
+              <p className="text-[#948979] break-words whitespace-pre-wrap">{selectedProduct.description}</p>
             </div>
           </div>
         )}
