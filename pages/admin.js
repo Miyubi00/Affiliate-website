@@ -36,6 +36,10 @@ export default function AdminPage() {
     router.push("/login");
   };
 
+  const Katalog = () => {
+    router.push("/");
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -271,7 +275,7 @@ export default function AdminPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white py-10 px-4">
-        <div className="max-w-3xl mx-auto">
+        <div className="flex justify-end p-4">
           <button
             onClick={handleLogout}
             className="mb-4 bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white"
@@ -279,6 +283,14 @@ export default function AdminPage() {
             Logout
           </button>
 
+          <button
+            onClick={Katalog}
+            className="mb-4 ml-4 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
+          >
+            Lihat Katalog
+          </button>
+        </div>
+        <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-center">
             🛠️ {editId !== null ? "Edit Produk" : "Admin Panel"}
           </h1>
