@@ -1,22 +1,25 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import { supabase } from "../utils/supabaseClient";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(""); // Ganti jadi email
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Contoh validasi sederhana, nanti bisa diganti dengan autentikasi nyata
-    if (username === "admin" && password === "password123") {
-      // Simpan status login di localStorage/sessionStorage
-      localStorage.setItem("isLoggedIn", "true");
-      router.push("/admin");
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError("Email atau password salah");
     } else {
-      setError("Username atau password salah");
+      router.push("/admin");
     }
   };
 
@@ -33,10 +36,10 @@ export default function Login() {
           <p className="mb-4 text-red-500 font-semibold text-center">{error}</p>
         )}
         <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="w-full px-4 py-2 mb-4 rounded-lg border border-gray-600 bg-[#1e293b] text-white placeholder-gray-400"
           required
           autoFocus

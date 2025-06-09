@@ -1,26 +1,32 @@
-import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
-  const [isAuth, setIsAuth] = useState(null); // null = loading, true/false = sudah dicek
+  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (!loggedIn) {
-      router.replace("/login");
-    } else {
-      setIsAuth(true);
-    }
+    const getSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/login");
+      } else {
+        setSession(session);
+      }
+      setIsLoading(false);
+    };
+
+    getSession();
   }, [router]);
 
-  if (isAuth === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-        Loading...
-      </div>
-    );
+  if (isLoading) {
+    return <div className="text-white p-4">Loading...</div>;
   }
 
-  return <>{children}</>;
+  return session ? children : null;
 }

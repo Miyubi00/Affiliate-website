@@ -1,52 +1,40 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { generateProductCode } from "../utils/utils";
+import { supabase } from "../utils/supabaseClient";
 
-const baseProducts = [
-
-];
+const baseProducts = [];
 
 export default function Home() {
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [extraProducts, setExtraProducts] = useState([]);
 
-  // Fungsi load products dari localStorage
-  const loadProductsFromStorage = () => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("admin-products");
-      if (saved) {
-        setExtraProducts(JSON.parse(saved));
-      } else {
-        setExtraProducts([]);
-      }
+  // Ganti load dari Supabase
+  const loadProductsFromSupabase = async () => {
+    const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+    if (error) {
+      console.error("Gagal memuat produk dari Supabase:", error.message);
+      return;
     }
+    setExtraProducts(data || []);
   };
 
   useEffect(() => {
-    loadProductsFromStorage();
+    loadProductsFromSupabase();
 
-    // Pasang listener event storage untuk auto refresh jika data di tab lain berubah
-    const onStorageChange = (event) => {
-      if (event.key === "admin-products") {
-        loadProductsFromStorage();
-      }
-    };
+    // Optional: Re-fetch setiap 30 detik
+    const interval = setInterval(() => {
+      loadProductsFromSupabase();
+    }, 30000);
 
-    window.addEventListener("storage", onStorageChange);
-
-    // Cleanup listener saat component unmount
-    return () => {
-      window.removeEventListener("storage", onStorageChange);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const products = useMemo(() => {
-    const combined = [...baseProducts, ...extraProducts];
-    return combined.map((product) => ({
-      ...product,
-      code: generateProductCode(product.id),
-    }));
-  }, [extraProducts]);
+  const combined = [...baseProducts, ...extraProducts];
+  return combined; // tidak generate code manual lagi
+}, [extraProducts]);
 
   const filteredProducts = products.filter(
     (product) =>
@@ -124,8 +112,8 @@ export default function Home() {
                 X
               </button>
               <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
-              <p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
-              <p className="text-gray-400 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
+<p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
+<p className="text-gray-400 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
             </div>
           </div>
         )}
