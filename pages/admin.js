@@ -3,6 +3,7 @@ import { generateProductCode } from "../utils/utils";
 import { useRouter } from "next/router";
 import ProtectedRoute from "../utils/ProtectedRoute";
 import { supabase } from "../utils/supabaseClient";
+import { XMarkIcon, PhotoIcon } from "@heroicons/react/24/solid";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -18,6 +19,9 @@ export default function AdminPage() {
   const [editId, setEditId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
 
   useEffect(() => {
     const session = supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,11 +30,11 @@ export default function AdminPage() {
       }
     });
   }, []);
-  
-const handleLogout = async () => {
-  await supabase.auth.signOut();
-  router.push("/login");
-};
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -77,11 +81,16 @@ const handleLogout = async () => {
   const uploadImage = async () => {
     if (!imageFile) return null;
 
+    // Auto crop 1:1 pakai canvas
+    const croppedBlob = await autoCropToSquare(imageFile);
+
     const filename = `${Date.now()}-${imageFile.name}`;
 
     const { data, error } = await supabase.storage
       .from("product-images")
-      .upload(filename, imageFile);
+      .upload(filename, croppedBlob, {
+        contentType: imageFile.type, // penting: supaya tipe file tetap valid
+      });
 
     if (error) {
       console.error("Supabase upload error:", error);
@@ -100,9 +109,65 @@ const handleLogout = async () => {
     return publicUrlData.publicUrl;
   };
 
+  const autoCropToSquare = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        img.src = reader.result;
+      };
+
+      img.onload = () => {
+        const minSize = Math.min(img.width, img.height);
+        const offsetX = (img.width - minSize) / 2;
+        const offsetY = (img.height - minSize) / 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = minSize;
+        canvas.height = minSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // Draw tanpa resize
+        ctx.drawImage(
+          img,
+          offsetX,
+          offsetY,
+          minSize,
+          minSize,
+          0,
+          0,
+          minSize,
+          minSize
+        );
+
+        // Compress (masih pakai JPEG dan quality 70%)
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              console.error("Failed to crop/compress image.");
+            }
+          },
+          "image/jpeg",
+          0.7
+        );
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (editId === null && !imageFile) {
+      setErrorMessage("Gambar produk wajib diupload.");
+      setErrorModalOpen(true);
+      return;
+    }
     let imageUrl = image;
 
     if (imageFile) {
@@ -234,23 +299,44 @@ const handleLogout = async () => {
               className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#1e293b] text-white placeholder-gray-400"
               required
             ></textarea>
-            <input
-              type="file"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                setImageFile(file);
-                setPreviewUrl(URL.createObjectURL(file));
-              }}
-              className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#1e293b] text-white"
-              accept="image/*"
-            />
-            {previewUrl && (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="w-full h-40 object-contain rounded mb-2 border border-gray-700"
-              />
-            )}
+            <div className="w-full">
+              <label className="block mb-2 text-sm font-medium text-gray-300">Gambar Produk</label>
+              <div className="relative border border-gray-600 rounded-lg bg-[#1e293b] p-4 flex items-center justify-center h-40">
+                {previewUrl ? (
+                  <>
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="object-contain max-h-full max-w-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewUrl("");
+                        setImageFile(null);
+                      }}
+                      className="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 rounded-full p-1"
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <PhotoIcon className="w-12 h-12 text-gray-500" />
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        setImageFile(file);
+                        setPreviewUrl(URL.createObjectURL(file));
+                      }}
+                      accept="image/*"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </>
+                )}
+              </div>
+            </div>
             <input
               type="text"
               placeholder="Link Pembelian"
@@ -291,7 +377,7 @@ const handleLogout = async () => {
                 className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-600 bg-[#1e293b] text-white placeholder-gray-400"
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {hasMounted &&
                   products
                     .filter((product) =>
@@ -304,11 +390,13 @@ const handleLogout = async () => {
                         key={product.id}
                         className="bg-[#0f172a] border border-gray-700 rounded-xl p-4"
                       >
-                        <img
-                          src={product.image}
-                          alt={product.title}
-                          className="w-full h-32 object-contain rounded mb-2"
-                        />
+                        <div className="w-full aspect-square flex items-center justify-center mb-4">
+                          <img
+                            src={product.image}
+                            alt={product.title}
+                            className="w-full h-full object-contain rounded-2xl"
+                          />
+                        </div>
                         <h3 className="font-bold text-lg mb-1 truncate">{product.title}</h3>
                         <p className="text-gray-400 text-sm mb-1 truncate">{product.description}</p>
                         <p className="text-gray-500 text-xs mb-2">Kode: {product.code}</p>
@@ -316,7 +404,7 @@ const handleLogout = async () => {
                           onClick={() =>
                             window.open(`/admin?editId=${product.id}`, "_blank")
                           }
-                          className="inline-block px-3 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-sm rounded mr-2"
+                          className="inline-block px-3 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-sm rounded mb-1 mr-2"
                         >
                           Edit Produk
                         </button>
@@ -361,6 +449,21 @@ const handleLogout = async () => {
               </div>
             </div>
           )}
+
+          {errorModalOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+              onClick={() => setErrorModalOpen(false)}
+            >
+              <div
+                className="bg-[#1e293b] rounded-lg p-6 max-w-sm w-full text-center text-white"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold">{errorMessage}</h3>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </ProtectedRoute>

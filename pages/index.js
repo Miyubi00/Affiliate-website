@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { generateProductCode } from "../utils/utils";
 import { supabase } from "../utils/supabaseClient";
+import { InformationCircleIcon } from "@heroicons/react/24/solid";
 
 const baseProducts = [];
 
@@ -32,9 +32,9 @@ export default function Home() {
   }, []);
 
   const products = useMemo(() => {
-  const combined = [...baseProducts, ...extraProducts];
-  return combined; // tidak generate code manual lagi
-}, [extraProducts]);
+    const combined = [...baseProducts, ...extraProducts];
+    return combined; // tidak generate code manual lagi
+  }, [extraProducts]);
 
   const filteredProducts = products.filter(
     (product) =>
@@ -47,6 +47,18 @@ export default function Home() {
       setSelectedProduct(null);
     }
   };
+
+  function InfoButton({ onClick }) {
+    return (
+      <button
+        onClick={onClick}
+        className="ml-1 w-11 h-11 bg-white-600 hover:bg-white-500 text-white rounded-full flex items-center justify-center p-0"
+        aria-label="Info"
+      >
+        <InformationCircleIcon className="w-11 h-11" />
+      </button>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-white py-10 px-4">
@@ -64,32 +76,35 @@ export default function Home() {
           />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
               className="bg-[#0f172a] border border-gray-700 rounded-xl p-4 shadow-xl hover:shadow-blue-500/20 transition duration-300 flex flex-col"
             >
-              <img
-                src={product.image}
-                alt={product.title}
-                className="w-full h-40 sm:h-48 object-contain rounded-md mb-2"
-              />
-              <h2 className="text-left text-xs text-[16px] font-medium mb-4 truncate">{product.title}</h2>
-              <button
-                onClick={() => setSelectedProduct(product)}
-                className="mb-2 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg"
-              >
-                Detail
-              </button>
-              <a
-                href={product.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block text-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
-              >
-                Beli Sekarang
-              </a>
+              <div className="w-full aspect-square flex items-center justify-center mb-4">
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  className="w-full h-full object-contain rounded-2xl"
+                />
+              </div>
+
+              <h2 className="text-white text-[16px] font-medium text-left leading-snug break-words mb-4">
+                {product.title}
+              </h2>
+
+              <div className="flex items-center justify-between mt-auto">
+                <a
+                  href={product.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg w-full text-center font-semibold"
+                >
+                  Beli
+                </a>
+                <InfoButton onClick={() => setSelectedProduct(product)} />
+              </div>
             </div>
           ))}
         </div>
@@ -112,8 +127,8 @@ export default function Home() {
                 X
               </button>
               <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
-<p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
-<p className="text-gray-400 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
+              <p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
+              <p className="text-gray-400 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
             </div>
           </div>
         )}
