@@ -51,11 +51,8 @@ export default function Home() {
   function InfoButton({ onClick }) {
     return (
       <button
-        onClick={onClick}
-        className="ml-1 w-11 h-11 bg-white-600 hover:bg-white-500 text-white rounded-full flex items-center justify-center p-0"
-        aria-label="Info"
-      >
-        <InformationCircleIcon className="w-11 h-11" />
+        onClick={onClick}>
+        <InformationCircleIcon className="cursor-pointer ml-1 w-11 h-11" />
       </button>
     );
   }
@@ -72,7 +69,7 @@ export default function Home() {
             placeholder="Cari produk (nama / kode)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-md px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#94897] placeholder-[#948979]"
+            className="w-full max-w-md px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
           />
         </div>
 
@@ -80,7 +77,8 @@ export default function Home() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-[#E69DB8] border border-yellow rounded-xl p-4 shadow-xl hover:shadow-yellow-500/20 transition duration-300 flex flex-col"
+              onClick={() => setSelectedProduct(product)}
+              className="cursor-pointer bg-[#E69DB8] border border-yellow rounded-xl p-4 shadow-xl hover:shadow-yellow-500/20 transition duration-300 flex flex-col"
             >
               <div className="w-full aspect-square flex items-center justify-center mb-4">
                 <img
@@ -91,7 +89,12 @@ export default function Home() {
               </div>
 
               <h2 className="text-white text-[16px] font-medium text-left leading-snug break-words mb-4">
-                {product.title}
+                <span className="block sm:hidden">
+                  {product.title.length > 20 ? `${product.title.slice(0, 20)}...` : product.title}
+                </span>
+                <span className="hidden sm:block">
+                  {product.title}
+                </span>
               </h2>
 
               <div className="flex items-center justify-between mt-auto">
@@ -113,22 +116,27 @@ export default function Home() {
         {selectedProduct && (
           <div
             id="popup-backdrop"
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={handleBackdropClick}
           >
             <div
               className="bg-[#E69DB8] rounded-xl p-6 w-full max-w-md relative overflow-auto max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                className="absolute top-2 right-2 text-white text-xl font-bold"
-                onClick={() => setSelectedProduct(null)}
-              >
-                X
-              </button>
-              <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
-              <p className="text-gray-300 mb-2">Kode Produk: {selectedProduct.code}</p>
-              <p className="text-[#948979] break-words whitespace-pre-wrap">{selectedProduct.description}</p>
+              <img
+                src={selectedProduct.image}
+                alt={selectedProduct.title}
+                className="mb-5 w-full h-full object-contain rounded-md"
+              />
+              <h2 className="text-xl font-bold mb-2 break-words text-white">
+                {selectedProduct.title}
+              </h2>
+              <p className="text-yellow-300 mb-2 font-medium">
+                Kode Produk: {selectedProduct.code}
+              </p>
+              <p className="text-white break-words whitespace-pre-wrap">
+                {selectedProduct.description}
+              </p>
             </div>
           </div>
         )}
