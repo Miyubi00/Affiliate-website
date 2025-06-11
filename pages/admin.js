@@ -25,6 +25,51 @@ export default function AdminPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  useEffect(() => {
+    const handleBack = () => {
+      // Cek satu per satu modal yang sedang terbuka, lalu tutup
+      let hasModalOpen = false;
+
+      if (isEditModalOpen) {
+        setIsEditModalOpen(false);
+        hasModalOpen = true;
+      }
+
+      if (selectedProduct) {
+        setSelectedProduct(null);
+        hasModalOpen = true;
+      }
+
+      if (modalOpen) {
+        setModalOpen(false);
+        hasModalOpen = true;
+      }
+
+      if (deleteId !== null) {
+        setDeleteId(null);
+        hasModalOpen = true;
+      }
+
+      if (errorModalOpen) {
+        setErrorModalOpen(false);
+        hasModalOpen = true;
+      }
+
+      // Cegah browser keluar kalau ada modal yang ditutup
+      if (hasModalOpen) {
+        window.history.pushState(null, "", window.location.href); // push dummy state lagi
+      }
+    };
+
+    // Tambah dummy state untuk deteksi back
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handleBack);
+
+    return () => {
+      window.removeEventListener("popstate", handleBack);
+    };
+  }, [isEditModalOpen, selectedProduct, modalOpen, deleteId, errorModalOpen]);
+
 
   useEffect(() => {
     const session = supabase.auth.getSession().then(({ data: { session } }) => {
@@ -259,332 +304,332 @@ export default function AdminPage() {
     }
   };
 
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-[#F1E7E7] text-white py-10 px-4">
-          <FloatingButtons handleLogout={handleLogout} Katalog={Katalog} />
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6 text-[#948979] text-center">
-              🛠️Admin Panel
-            </h1>
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-[#F1E7E7] text-white py-10 px-4">
+        <FloatingButtons handleLogout={handleLogout} Katalog={Katalog} />
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6 text-[#948979] text-center">
+            🛠️Admin Panel
+          </h1>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nama Produk"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                required
-              />
-              <textarea
-                placeholder="Deskripsi Produk"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                required
-              ></textarea>
-              <div className="w-full">
-                <label className="block mb-2 text-sm font-medium text-[#948979]">Gambar Produk</label>
-                <div className="relative border border-gray-600 rounded-lg bg-[#FFC6C6] p-4 flex items-center justify-center h-40">
-                  {previewUrl ? (
-                    <>
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="object-contain max-h-full max-w-full"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPreviewUrl("");
-                          setImageFile(null);
-                        }}
-                        className="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 rounded-full p-1"
-                      >
-                        <XMarkIcon className="w-5 h-5" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <PhotoIcon className="w-12 h-12 text-[#948979]" />
-                      <input
-                        type="file"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          setImageFile(file);
-                          setPreviewUrl(URL.createObjectURL(file));
-                        }}
-                        accept="image/*"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-              <input
-                type="text"
-                placeholder="Link Pembelian"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full py-2 bg-[#D76C82] hover:text-[#948979] hover:bg-[#FFFECE] text-white rounded-lg font-semibold"
-              >
-                {editId !== null ? "Simpan Perubahan" : "Tambahkan Produk"}
-              </button>
-              {editId !== null && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetForm();
-                    setEditId(null);
-                  }}
-                  className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-semibold"
-                >
-                  Batal Edit
-                </button>
-              )}
-            </form>
-
-            {editId === null && (
-              <>
-                <h2 className="text-xl text-[#948979] font-bold mt-10 mb-4">🗃️ Produk Tersimpan</h2>
-
-                <input
-                  type="text"
-                  placeholder="Cari produk berdasarkan nama atau kode"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                />
-
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {hasMounted &&
-                    products
-                      .filter((product) =>
-                        `${product.title} ${product.code}`
-                          .toLowerCase()
-                          .includes(search.toLowerCase())
-                      )
-                      .map((product) => (
-                        <div
-                          key={product.id}
-                          onClick={() => setSelectedProduct(product)}
-                          className="cursor-pointer bg-[#E69DB8] border-yellow rounded-xl p-4 shadow-xl hover:shadow-yellow-500/20 transition duration-300 flex flex-col relative"
-                        >
-                          <div className="w-full aspect-square flex items-center justify-center mb-4">
-                            <img
-                              src={product.image}
-                              alt={product.title}
-                              className="w-full h-full object-contain rounded-2xl"
-                            />
-                          </div>
-
-                          <h2 className="text-white text-[16px] font-medium text-left leading-snug break-words mb-[60px]">
-                            <span className="block sm:hidden">
-                              {product.title.length > 20 ? `${product.title.slice(0, 20)}...` : product.title}
-                            </span>
-                            <span className="hidden sm:block">{product.title}</span>
-                          </h2>
-
-                          <div className="mt-5 absolute bottom-4 left-4 right-4">
-                            <p className="text-white-400 text-sm truncate mb-1">{product.description}</p>
-                            <p className="text-yellow-100 text-xs">Kode: {product.code}</p>
-                          </div>
-                        </div>
-                      ))}
-                </div>
-              </>
-            )}
-
-            {selectedProduct && (
-              <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                onClick={() => setSelectedProduct(null)}
-              >
-                <div
-                  className="bg-[#E69DB8] rounded-xl p-6 w-full max-w-md relative overflow-auto max-h-[90vh]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <img
-                    src={selectedProduct.image}
-                    alt={selectedProduct.title}
-                    className="mb-5 w-full h-full object-contain rounded-md"
-                  />
-                  <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
-                  <p className="text-white-400 text-sm mb-2">{selectedProduct.description}</p>
-                  <p className="text-yellow-300 mb-4 text-sm">Kode: {selectedProduct.code}</p>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => {
-                        setTitle(selectedProduct.title);
-                        setDescription(selectedProduct.description);
-                        setImage(selectedProduct.image);
-                        setPreviewUrl(selectedProduct.image);
-                        setLink(selectedProduct.link);
-                        setEditId(selectedProduct.id); // jangan lupa ini juga
-                        setIsEditModalOpen(true);
-                      }}
-                      className="px-4 py-2 bg-[#F2C078] hover:bg-[#FFFECE] hover:text-gray-700 text-white rounded-lg"
-                    >
-                      Edit Produk
-                    </button>
-
-                    <button
-                      onClick={() => openDeleteModal(selectedProduct.id)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
-                    >
-                      Hapus Produk
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isEditModalOpen && (
-              <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div
-                  className="bg-[#E69DB8] rounded-xl p-6 w-full max-w-md overflow-auto max-h-[90vh]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h2 className="text-xl font-bold mb-4 text-white">Edit Produk</h2>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Nama Produk"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                      required
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Nama Produk"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+              required
+            />
+            <textarea
+              placeholder="Deskripsi Produk"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+              required
+            ></textarea>
+            <div className="w-full">
+              <label className="block mb-2 text-sm font-medium text-[#948979]">Gambar Produk</label>
+              <div className="relative border border-gray-600 rounded-lg bg-[#FFC6C6] p-4 flex items-center justify-center h-40">
+                {previewUrl ? (
+                  <>
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="object-contain max-h-full max-w-full"
                     />
-                    <textarea
-                      placeholder="Deskripsi Produk"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                      required
-                    ></textarea>
-                    <div className="w-full">
-                      <label className="block mb-2 text-sm font-medium text-[#948979]">Gambar Produk</label>
-                      <div className="relative border border-gray-600 rounded-lg bg-[#FFC6C6] p-4 flex items-center justify-center h-40">
-                        {previewUrl ? (
-                          <>
-                            <img
-                              src={previewUrl}
-                              alt="Preview"
-                              className="object-contain max-h-full max-w-full"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPreviewUrl("");
-                                setImageFile(null);
-                              }}
-                              className="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 rounded-full p-1"
-                            >
-                              <XMarkIcon className="w-5 h-5" />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <PhotoIcon className="w-12 h-12 text-[#948979]" />
-                            <input
-                              type="file"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                setImageFile(file);
-                                setPreviewUrl(URL.createObjectURL(file));
-                              }}
-                              accept="image/*"
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Link Pembelian"
-                      value={link}
-                      onChange={(e) => setLink(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
-                      required
-                    />
-                    <button
-                      type="submit"
-                      className="w-full mb-2 py-2 bg-[#D76C82] hover:text-[#948979] hover:bg-[#FFFECE] text-white rounded-lg font-medium"
-                    >
-                      Simpan Perubahan
-                    </button>
                     <button
                       type="button"
                       onClick={() => {
-                        resetForm();
-                        setIsEditModalOpen(false);
+                        setPreviewUrl("");
+                        setImageFile(null);
                       }}
-                      className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-medium"
+                      className="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 rounded-full p-1"
                     >
-                      Batal Edit
+                      <XMarkIcon className="w-5 h-5" />
                     </button>
-                  </form>
+                  </>
+                ) : (
+                  <>
+                    <PhotoIcon className="w-12 h-12 text-[#948979]" />
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        setImageFile(file);
+                        setPreviewUrl(URL.createObjectURL(file));
+                      }}
+                      accept="image/*"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Link Pembelian"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+              required
+            />
+            <button
+              type="submit"
+              className="w-full py-2 bg-[#D76C82] hover:text-[#948979] hover:bg-[#FFFECE] text-white rounded-lg font-semibold"
+            >
+              {editId !== null ? "Simpan Perubahan" : "Tambahkan Produk"}
+            </button>
+            {editId !== null && (
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  setEditId(null);
+                }}
+                className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-semibold"
+              >
+                Batal Edit
+              </button>
+            )}
+          </form>
+
+          {editId === null && (
+            <>
+              <h2 className="text-xl text-[#948979] font-bold mt-10 mb-4">🗃️ Produk Tersimpan</h2>
+
+              <input
+                type="text"
+                placeholder="Cari produk berdasarkan nama atau kode"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+              />
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {hasMounted &&
+                  products
+                    .filter((product) =>
+                      `${product.title} ${product.code}`
+                        .toLowerCase()
+                        .includes(search.toLowerCase())
+                    )
+                    .map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => setSelectedProduct(product)}
+                        className="cursor-pointer bg-[#E69DB8] border-yellow rounded-xl p-4 shadow-xl hover:shadow-yellow-500/20 transition duration-300 flex flex-col relative"
+                      >
+                        <div className="w-full aspect-square flex items-center justify-center mb-4">
+                          <img
+                            src={product.image}
+                            alt={product.title}
+                            className="w-full h-full object-contain rounded-2xl"
+                          />
+                        </div>
+
+                        <h2 className="text-white text-[16px] font-medium text-left leading-snug break-words mb-[60px]">
+                          <span className="block sm:hidden">
+                            {product.title.length > 20 ? `${product.title.slice(0, 20)}...` : product.title}
+                          </span>
+                          <span className="hidden sm:block">{product.title}</span>
+                        </h2>
+
+                        <div className="mt-5 absolute bottom-4 left-4 right-4">
+                          <p className="text-white-400 text-sm truncate mb-1">{product.description}</p>
+                          <p className="text-yellow-100 text-xs">Kode: {product.code}</p>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+            </>
+          )}
+
+          {selectedProduct && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={() => setSelectedProduct(null)}
+            >
+              <div
+                className="bg-[#E69DB8] rounded-xl p-6 w-full max-w-md relative overflow-auto max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={selectedProduct.image}
+                  alt={selectedProduct.title}
+                  className="mb-5 w-full h-full object-contain rounded-md"
+                />
+                <h2 className="text-xl font-bold mb-2 break-words">{selectedProduct.title}</h2>
+                <p className="text-white-400 text-sm mb-2 break-words whitespace-pre-wrap">{selectedProduct.description}</p>
+                <p className="text-yellow-300 mb-4 text-sm">Kode: {selectedProduct.code}</p>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setTitle(selectedProduct.title);
+                      setDescription(selectedProduct.description);
+                      setImage(selectedProduct.image);
+                      setPreviewUrl(selectedProduct.image);
+                      setLink(selectedProduct.link);
+                      setEditId(selectedProduct.id); // jangan lupa ini juga
+                      setIsEditModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-[#F2C078] hover:bg-[#FFFECE] hover:text-gray-700 text-white rounded-lg"
+                  >
+                    Edit Produk
+                  </button>
+
+                  <button
+                    onClick={() => openDeleteModal(selectedProduct.id)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
+                  >
+                    Hapus Produk
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {modalOpen && (
+          {isEditModalOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                onClick={closeDeleteModal}
+                className="bg-[#E69DB8] rounded-xl p-6 w-full max-w-md overflow-auto max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="bg-[#E69DB8] rounded-lg p-6 max-w-sm w-full"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="text-lg font-semibold mb-4 text-white">
-                    Apakah kamu yakin untuk hapus produk ini?
-                  </h3>
-                  <div className="flex justify-end space-x-4">
-                    <button
-                      onClick={closeDeleteModal}
-                      className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-white"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white"
-                    >
-                      Hapus
-                    </button>
+                <h2 className="text-xl font-bold mb-4 text-white">Edit Produk</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Nama Produk"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+                    required
+                  />
+                  <textarea
+                    placeholder="Deskripsi Produk"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+                    required
+                  ></textarea>
+                  <div className="w-full">
+                    <label className="block mb-2 text-sm font-medium text-[#948979]">Gambar Produk</label>
+                    <div className="relative border border-gray-600 rounded-lg bg-[#FFC6C6] p-4 flex items-center justify-center h-40">
+                      {previewUrl ? (
+                        <>
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="object-contain max-h-full max-w-full"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewUrl("");
+                              setImageFile(null);
+                            }}
+                            className="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 rounded-full p-1"
+                          >
+                            <XMarkIcon className="w-5 h-5" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <PhotoIcon className="w-12 h-12 text-[#948979]" />
+                          <input
+                            type="file"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              setImageFile(file);
+                              setPreviewUrl(URL.createObjectURL(file));
+                            }}
+                            accept="image/*"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  <input
+                    type="text"
+                    placeholder="Link Pembelian"
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-600 bg-[#FFC6C6] text-[#948979] placeholder-[#948979]"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="w-full mb-2 py-2 bg-[#D76C82] hover:text-[#948979] hover:bg-[#FFFECE] text-white rounded-lg font-medium"
+                  >
+                    Simpan Perubahan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetForm();
+                      setIsEditModalOpen(false);
+                    }}
+                    className="w-full py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-white font-medium"
+                  >
+                    Batal Edit
+                  </button>
+                </form>
               </div>
-            )}
+            </div>
+          )}
 
-            {errorModalOpen && (
+          {modalOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={closeDeleteModal}
+            >
               <div
-                className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
-                onClick={() => setErrorModalOpen(false)}
+                className="bg-[#E69DB8] rounded-lg p-6 max-w-sm w-full"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="bg-[#1e293b] rounded-lg p-6 max-w-sm w-full text-center text-white"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="text-lg font-semibold">{errorMessage}</h3>
+                <h3 className="text-lg font-semibold mb-4 text-white">
+                  Apakah kamu yakin untuk hapus produk ini?
+                </h3>
+                <div className="flex justify-end space-x-4">
+                  <button
+                    onClick={closeDeleteModal}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-white"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white"
+                  >
+                    Hapus
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-          </div>
+          {errorModalOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50"
+              onClick={() => setErrorModalOpen(false)}
+            >
+              <div
+                className="bg-[#1e293b] rounded-lg p-6 max-w-sm w-full text-center text-white"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold">{errorMessage}</h3>
+              </div>
+            </div>
+          )}
+
         </div>
-      </ProtectedRoute>
-    );
-  }
+      </div>
+    </ProtectedRoute>
+  );
+}
