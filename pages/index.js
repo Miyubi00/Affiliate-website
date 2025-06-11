@@ -21,6 +21,23 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const handleBack = () => {
+      if (selectedProduct) {
+        setSelectedProduct(null); // Tutup modal
+        window.history.pushState(null, "", window.location.href); // Tambah state dummy lagi
+      }
+    };
+
+    window.history.pushState(null, "", window.location.href); // Tambah state dummy saat modal dibuka
+    window.addEventListener("popstate", handleBack);
+
+    return () => {
+      window.removeEventListener("popstate", handleBack);
+    };
+  }, [selectedProduct]);
+
+
+  useEffect(() => {
     loadProductsFromSupabase();
 
     // Optional: Re-fetch setiap 30 detik
